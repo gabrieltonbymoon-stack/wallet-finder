@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SatoshiGen | Premium Bitcoin Wallet Research</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <main class="glass-container">
+        <header class="app-header">
+            <div class="header-main">
+                <div class="logo">
+                    <span class="icon">₿</span>
+                    <h1>SatoshiGen</h1>
+                </div>
+                <div id="system-status" class="system-status loading">System: Initializing...</div>
+            </div>
+            <p class="subtitle">Secure Bitcoin Research Tool</p>
+        </header>
+
+        <section class="wallet-card">
+            <div class="card-top">
+                <div class="stats-group">
+                    <div id="scan-counter" class="scan-counter">Scanned: <span>0</span></div>
+                    <div class="export-control">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="auto-export-toggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <span class="toggle-label">Auto-Export</span>
+                    </div>
+                </div>
+                <div class="action-group">
+                    <button id="export-btn" class="secondary-btn icon-only" title="Export Results">💾</button>
+                    <button id="generate-btn" class="primary-btn">Generate</button>
+                    <button id="auto-btn" class="secondary-btn">Search</button>
+                </div>
+            </div>
+
+            <div class="results-grid">
+                <div class="result-item full-width">
+                    <label>Seed Phrase (Mnemonic)</label>
+                    <div class="field-container">
+                        <div id="mnemonic-field" class="field mono placeholder">Generating...</div>
+                        <button class="copy-btn" data-target="mnemonic-field">Copy</button>
+                    </div>
+                </div>
+
+                <div class="result-item">
+                    <label>Legacy Address (P2PKH)</label>
+                    <div class="field-container">
+                        <input id="address-legacy" class="field mono" placeholder="Paste Legacy here..." value="Generate to view...">
+                        <button class="check-btn icon-btn" data-target="address-legacy" title="Check Balance">🔍</button>
+                        <button class="copy-btn" data-target="address-legacy">Copy</button>
+                    </div>
+                </div>
+
+                <div class="result-item">
+                    <label>Nested SegWit (P2SH)</label>
+                    <div class="field-container">
+                        <input id="address-nested" class="field mono" placeholder="Paste Nested here..." value="Generate to view...">
+                        <button class="check-btn icon-btn" data-target="address-nested" title="Check Balance">🔍</button>
+                        <button class="copy-btn" data-target="address-nested">Copy</button>
+                    </div>
+                </div>
+
+                <div class="result-item">
+                    <label>Native SegWit (Bech32)</label>
+                    <div class="field-container">
+                        <input id="address-native" class="field mono" placeholder="Paste Native here..." value="Generate to view...">
+                        <button class="check-btn icon-btn" data-target="address-native" title="Check Balance">🔍</button>
+                        <button class="copy-btn" data-target="address-native">Copy</button>
+                    </div>
+                </div>
+
+                <!-- Hidden input for manual check compatibility -->
+                <input type="hidden" id="address-field">
+
+                <div class="result-item">
+                    <label>Current Balance</label>
+                    <div class="field-container">
+                        <div id="balance-field" class="field mono placeholder">0.00000000 BTC</div>
+                        <button id="refresh-balance" class="icon-btn">🔄</button>
+                    </div>
+                </div>
+
+
+                <div class="result-item">
+                    <label>Private Key (WIF)</label>
+                    <div class="field-container">
+                        <div id="privatekey-field" class="field mono secure placeholder">••••••••••••••••••••••••</div>
+                        <button id="toggle-key" class="icon-btn">👁️</button>
+                        <button class="copy-btn" data-target="privatekey-field">Copy</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="history-section" class="history-section">
+            <div class="section-divider"></div>
+            <div class="history-header">
+                <h3>Recent Scans</h3>
+                <span class="history-count">Last 5</span>
+            </div>
+            <ul id="history-list" class="history-list">
+                <!-- History items will be injected here -->
+                <li class="history-empty">No scans yet</li>
+            </ul>
+        </section>
+
+        <div id="debug-log" class="debug-log">
+            <div class="debug-header">Initialization Log</div>
+            <div id="debug-output">Wait for polyfills...</div>
+        </div>
+
+        <footer>
+            <div class="warning-banner">
+                <span class="warning-icon">⚠️</span>
+                <p>This tool is for <strong>research purposes only</strong>. Phrases are generated using browser-side
+                    entropy. Never store real funds in AI-assisted wallets.</p>
+            </div>
+        </footer>
+    </main>
+
+    <script src="./polyfills.js"></script>
+    <script type="module" src="./main.js"></script>
+</body>
+
+</html>
