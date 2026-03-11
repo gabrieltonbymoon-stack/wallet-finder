@@ -174,8 +174,14 @@ async function fetchBalance(address, retries = 2) {
     ];
     
     for (const url of apis) {
+        // Create an AbortController to enforce a strict timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3-second timeout
+        
         try {
-            const res = await fetch(url);
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId); // Clear timeout if request succeeds
+            
             if (res.status === 429) {
                 logDebug(`Rate limited by ${url}. Switching API...`, true);
                 continue; // Try next API immediately instead of waiting
@@ -187,7 +193,12 @@ async function fetchBalance(address, retries = 2) {
                 return (sats / 100000000).toFixed(8);
             }
         } catch (e) {
-            logDebug(`Fetch error for ${address} on ${url}: ${e.message}`, true);
+            clearTimeout(timeoutId);
+            if (e.name === 'AbortError') {
+                logDebug(`Timeout for ${address} on ${url}`, true);
+            } else {
+                logDebug(`Fetch error for ${address} on ${url}: ${e.message}`, true);
+            }
         }
     }
     
