@@ -175,14 +175,10 @@ async function fetchBalance(address, retries = 2) {
     
     for (const url of apis) {
         try {
-            // Add a small delay to avoid hammering the APIs too fast
-            await delay(1500); 
-            
             const res = await fetch(url);
             if (res.status === 429) {
-                logDebug(`Rate limited by ${url}. Waiting...`, true);
-                await delay(3000); // Wait longer if strict rate limit hit
-                continue; // Try next API
+                logDebug(`Rate limited by ${url}. Switching API...`, true);
+                continue; // Try next API immediately instead of waiting
             }
             if (res.ok) {
                 const data = await res.json();
@@ -195,13 +191,13 @@ async function fetchBalance(address, retries = 2) {
         }
     }
     
+    // If all APIs fail and we have retries, wait a bit before retrying
     if (retries > 0) {
         logDebug(`Retrying balance fetch for ${address}...`);
         await delay(2000);
         return fetchBalance(address, retries - 1);
     }
     
-    // If all fails, assume 0 so the loop doesn't freeze forever
     return '0.00000000'; 
 }
 
@@ -291,7 +287,8 @@ async function startSearch() {
     while (isSearching) {
         const found = await generateWallet(true);
         if (found) break;
-        await new Promise(r => setTimeout(r, 1000));
+        // Wait 2 seconds between full wallet generation cycles to respect API limits
+        await delay(2000); 
     }
 }
 
