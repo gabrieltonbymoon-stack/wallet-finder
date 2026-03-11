@@ -51,12 +51,12 @@ async function initializeApp() {
     try {
         updateStatus('Pollyfilling...', 'loading');
         logDebug('Ensuring Buffer exists...');
-        
+
         let attempts = 0;
         while (typeof Buffer === 'undefined' && typeof window.Buffer === 'undefined' && attempts < 5) {
-             logDebug(`Buffer missing, waiting (attempt ${attempts+1}/5)...`, true);
-             await new Promise(r => setTimeout(r, 600));
-             attempts++;
+            logDebug(`Buffer missing, waiting (attempt ${attempts + 1}/5)...`, true);
+            await new Promise(r => setTimeout(r, 600));
+            attempts++;
         }
 
         if (typeof Buffer === 'undefined' && typeof window.Buffer === 'undefined') {
@@ -66,7 +66,7 @@ async function initializeApp() {
 
         updateStatus('Loading Modules...', 'loading');
         logDebug('Importing cryptography libraries...');
-        
+
         const [bip39Mod, bip32Mod, eccMod, bjsMod] = await Promise.all([
             import('bip39'),
             import('bip32'),
@@ -82,10 +82,10 @@ async function initializeApp() {
         function findEcc(obj, depth = 0) {
             if (!obj || depth > 3) return null;
             // Check for the most critical functions
-            if (typeof obj.isPoint === 'function' && 
+            if (typeof obj.isPoint === 'function' &&
                 typeof obj.pointFromScalar === 'function' &&
                 typeof obj.privateAdd === 'function') return obj;
-            
+
             const targets = ['default', 'ecc', 'secp256k1'];
             for (const t of targets) {
                 const found = findEcc(obj[t], depth + 1);
@@ -116,7 +116,7 @@ async function initializeApp() {
         logDebug('Performing self-test derivation...');
         const testSeed = Buffer.alloc(64);
         bip32.fromSeed(testSeed);
-        
+
         logDebug('Engine fully initialized');
         updateStatus('Ready', 'ready');
         setupUIHandlers();
@@ -125,7 +125,7 @@ async function initializeApp() {
         console.error(err);
         updateStatus(`Engine Error: ${err.message}`, 'error');
         // Allow re-init if it was a transient failure
-        isInitialized = false; 
+        isInitialized = false;
     }
 }
 
@@ -143,7 +143,7 @@ function setupUIHandlers() {
 
     generateBtn.addEventListener('click', () => generateWallet(false));
     autoBtn.addEventListener('click', () => isSearching ? stopSearch() : startSearch());
-    
+
     toggleKeyBtn.addEventListener('click', () => {
         const privateKeyField = document.getElementById('privatekey-field');
         privateKeyField.classList.toggle('revealed');
@@ -165,20 +165,44 @@ function setupUIHandlers() {
     });
 }
 
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
 async function fetchBalance(address, retries = 2) {
-    try {
-        const res = await fetch(`https://mempool.space/api/address/${address}`);
-        if (res.ok) {
-            const data = await res.json();
-            const sats = (data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum) +
-                         (data.mempool_stats.funded_txo_sum - data.mempool_stats.spent_txo_sum);
-            return (sats / 100000000).toFixed(8);
+    const apis = [
+        `https://mempool.space/api/address/${address}`,
+        `https://blockstream.info/api/address/${address}`
+    ];
+    
+    for (const url of apis) {
+        try {
+            // Add a small delay to avoid hammering the APIs too fast
+            await delay(1500); 
+            
+            const res = await fetch(url);
+            if (res.status === 429) {
+                logDebug(`Rate limited by ${url}. Waiting...`, true);
+                await delay(3000); // Wait longer if strict rate limit hit
+                continue; // Try next API
+            }
+            if (res.ok) {
+                const data = await res.json();
+                const sats = (data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum) +
+                             (data.mempool_stats.funded_txo_sum - data.mempool_stats.spent_txo_sum);
+                return (sats / 100000000).toFixed(8);
+            }
+        } catch (e) {
+            logDebug(`Fetch error for ${address} on ${url}: ${e.message}`, true);
         }
-        throw new Error('API Error');
-    } catch (e) {
-        if (retries > 0) return fetchBalance(address, retries - 1);
-        return '0.00000000'; // Default to 0 on complete failure to keep loop going
     }
+    
+    if (retries > 0) {
+        logDebug(`Retrying balance fetch for ${address}...`);
+        await delay(2000);
+        return fetchBalance(address, retries - 1);
+    }
+    
+    // If all fails, assume 0 so the loop doesn't freeze forever
+    return '0.00000000'; 
 }
 
 async function generateWallet(updateCounter = false) {
@@ -284,11 +308,11 @@ function updateUI() {
     if (!currentWallet) return;
     document.getElementById('mnemonic-field').textContent = currentWallet.mnemonic;
     document.getElementById('mnemonic-field').classList.remove('placeholder');
-    
+
     document.getElementById('address-legacy').value = currentWallet.addresses.legacy;
     document.getElementById('address-nested').value = currentWallet.addresses.nested;
     document.getElementById('address-native').value = currentWallet.addresses.native;
-    
+
     ['address-legacy', 'address-nested', 'address-native'].forEach(id => {
         document.getElementById(id).classList.remove('placeholder');
     });
@@ -315,17 +339,17 @@ function updateHistoryUI() {
     scanHistory.forEach(scan => {
         const li = document.createElement('li');
         li.className = 'history-item';
-        
+
         const addrSpan = document.createElement('span');
         addrSpan.className = 'history-addr';
         // Show just the first and last few characters of the address
         addrSpan.textContent = `${scan.address.slice(0, 8)}...${scan.address.slice(-6)}`;
-        
+
         const balSpan = document.createElement('span');
         const isZero = scan.balance === 0;
         balSpan.className = `history-bal ${isZero ? 'zero' : 'positive'}`;
         balSpan.textContent = scan.balance.toFixed(8) + ' BTC';
-        
+
         li.appendChild(addrSpan);
         li.appendChild(balSpan);
         historyList.appendChild(li);
