@@ -163,6 +163,45 @@ function setupUIHandlers() {
             }
         });
     });
+
+    // Manual balance check
+    const checkBtns = document.querySelectorAll('.check-btn');
+    checkBtns.forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const targetInput = document.getElementById(btn.dataset.target);
+            const address = targetInput.value.trim();
+            const balanceField = document.getElementById('balance-field');
+            
+            if (!address || address.includes('...')) {
+                alert('Please enter a valid Bitcoin address to check.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.classList.add('loading');
+            balanceField.textContent = 'Checking...';
+            balanceField.classList.remove('placeholder');
+
+            try {
+                const balance = await fetchBalance(address);
+                balanceField.textContent = `${balance} BTC`;
+                
+                // Add positive feedback if > 0
+                if (parseFloat(balance) > 0) {
+                    balanceField.style.color = '#10b981'; // green
+                    alert(`🚨 SUCCESS! Found balance: ${balance} BTC on address:\n${address}`);
+                } else {
+                    balanceField.style.color = 'inherit'; // default
+                }
+            } catch (err) {
+                balanceField.textContent = 'Error fetching balance';
+                logDebug(`Manual check error for ${address}: ${err.message}`, true);
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+            }
+        });
+    });
 }
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
