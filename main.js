@@ -229,10 +229,18 @@ async function generateWallet(updateCounter = false) {
         currentWallet.balance = total.toFixed(8) + ' BTC';
         updateUI();
 
-        if (total > 0) {
+        scanHistory.unshift({
+            address: currentWallet.addresses.native,
+            balance: total
+        });
+        if (scanHistory.length > 5) scanHistory.pop();
+        updateHistoryUI();
+
+        // If the total balance is greater than exactly 0.00000000 BTC, stop immediately.
+        if (total > 0.00000000) {
             stopSearch();
-            alert(`🚨 SUCCESS! Found balance: ${currentWallet.balance} 🚨`);
-            return true;
+            alert(`🚨 SUCCESS! Found wallet with positive balance: ${currentWallet.balance} 🚨`);
+            return true; // Tells the auto-search loop to break
         }
         return false;
     } catch (err) {
@@ -292,6 +300,36 @@ function updateUI() {
     const privateKeyField = document.getElementById('privatekey-field');
     privateKeyField.textContent = currentWallet.privateKeys.native;
     privateKeyField.classList.remove('placeholder');
+}
+
+function updateHistoryUI() {
+    const historyList = document.getElementById('history-list');
+    if (!historyList) return;
+
+    if (scanHistory.length === 0) {
+        historyList.innerHTML = '<li class="history-empty">No scans yet</li>';
+        return;
+    }
+
+    historyList.innerHTML = '';
+    scanHistory.forEach(scan => {
+        const li = document.createElement('li');
+        li.className = 'history-item';
+        
+        const addrSpan = document.createElement('span');
+        addrSpan.className = 'history-addr';
+        // Show just the first and last few characters of the address
+        addrSpan.textContent = `${scan.address.slice(0, 8)}...${scan.address.slice(-6)}`;
+        
+        const balSpan = document.createElement('span');
+        const isZero = scan.balance === 0;
+        balSpan.className = `history-bal ${isZero ? 'zero' : 'positive'}`;
+        balSpan.textContent = scan.balance.toFixed(8) + ' BTC';
+        
+        li.appendChild(addrSpan);
+        li.appendChild(balSpan);
+        historyList.appendChild(li);
+    });
 }
 
 // 5. START UP
