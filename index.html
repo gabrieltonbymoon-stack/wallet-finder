@@ -56,6 +56,14 @@
 
             <div class="results-grid">
                 <div class="result-item full-width">
+                    <label>Current Balance</label>
+                    <div class="field-container">
+                        <div id="balance-field" class="field mono placeholder" style="font-size: 1.2rem; color: var(--primary); border-color: var(--primary);">0.00000000 BTC</div>
+                        <button id="refresh-balance" class="icon-btn">🔄</button>
+                    </div>
+                </div>
+
+                <div class="result-item full-width">
                     <label>Seed Phrase (Mnemonic)</label>
                     <div class="field-container">
                         <div id="mnemonic-field" class="field mono placeholder">Generating...</div>
@@ -93,13 +101,7 @@
                 <!-- Hidden input for manual check compatibility -->
                 <input type="hidden" id="address-field">
 
-                <div class="result-item">
-                    <label>Current Balance</label>
-                    <div class="field-container">
-                        <div id="balance-field" class="field mono placeholder">0.00000000 BTC</div>
-                        <button id="refresh-balance" class="icon-btn">🔄</button>
-                    </div>
-                </div>
+
 
 
                 <div class="result-item">
